@@ -10,10 +10,13 @@ from typing import Callable, List, Optional, Set, Tuple
 import cv2
 import numpy as np
 from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy.video.fx.CrossFadeIn import CrossFadeIn
+from moviepy.video.fx.CrossFadeOut import CrossFadeOut
 
 ProgressCallback = Optional[Callable[[float, str], None]]
 
 SEGMENT_DURATION = 3.0  # seconds per candidate clip
+CROSSFADE_DURATION = 0.6  # overlap between stitched clips
 
 # COCO land / above-water classes → hard reject at conf >= 0.30
 LAND_CLASS_NAMES: Set[str] = {
@@ -588,6 +591,30 @@ def _process_frame_rgb(
     return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
 
 
+def _concat_with_crossfade(clips: List, crossfade: float = CROSSFADE_DURATION):
+    """Stitch clips with crossfade transitions (MoviePy compose + negative padding)."""
+    if not clips:
+        return None
+    if len(clips) == 1:
+        return clips[0]
+
+    min_dur = min(float(c.duration or 0.0) for c in clips)
+    fade = min(crossfade, min_dur * 0.4)
+    if fade < 0.05:
+        return concatenate_videoclips(clips, method="compose")
+
+    faded = []
+    for i, clip in enumerate(clips):
+        effects = []
+        if i > 0:
+            effects.append(CrossFadeIn(fade))
+        if i < len(clips) - 1:
+            effects.append(CrossFadeOut(fade))
+        faded.append(clip.with_effects(effects) if effects else clip)
+
+    return concatenate_videoclips(faded, method="compose", padding=-fade)
+
+
 def build_montage(
     video_path: str,
     segments: List[SegmentScore],
@@ -603,7 +630,7 @@ def build_montage(
         )
 
     target = RESOLUTION_MAP.get(resolution_label)
-    _notify(progress, 0.65, "Шаг 2/3: Цветокоррекция и склеивание...")
+    _notify(progress, 0.65, "Шаг 2/3: Цветокоррекция, склейка и переходы...")
 
     source = VideoFileClip(video_path)
     clips = []
@@ -626,13 +653,13 @@ def build_montage(
             _notify(
                 progress,
                 0.65 + 0.25 * ((i + 1) / n),
-                "Шаг 2/3: Цветокоррекция и склеивание...",
+                "Шаг 2/3: Цветокоррекция, склейка и переходы...",
             )
 
         if not clips:
             raise RuntimeError("Не удалось вырезать фрагменты из видео.")
 
-        final = concatenate_videoclips(clips, method="compose")
+        final = _concat_with_crossfade(clips)
         final.write_videofile(
             output_path,
             codec="libx264",

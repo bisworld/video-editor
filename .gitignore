@@ -29,7 +29,7 @@ htmlcov/
 .env
 .env.*
 !.env.example
-.streamlit/secrets.toml
+.streamlit/
 
 # YOLO / ML weights & training artifacts
 *.pt
