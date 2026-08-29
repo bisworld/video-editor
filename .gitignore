@@ -1,0 +1,71 @@
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Secrets & local config
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# YOLO / ML weights & training artifacts
+*.pt
+*.pth
+*.onnx
+yolov8n.pt
+runs/
+wandb/
+weights/
+
+# Generated / temp video & media
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.MOV
+*.MP4
+*.AVI
+underwater_in_*
+underwater_out_*
+tmp/
+temp/
+*.tmp
+
+# Logs & caches
+*.log
+.cache/
+*.swp
+*.swo
+*~
+
+# IDE / OS
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
